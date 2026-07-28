@@ -52,7 +52,19 @@ export const t = {
   week: { en: "Week", sr: "Nedelja" },
   pickRecipe: { en: "Pick a recipe", sr: "Izaberi recept" },
   clearSlot: { en: "Clear", sr: "Obriši" },
-  minutes: { en: "m", sr: "min" },
+  addRecipe: { en: "Add recipe", sr: "Dodaj recept" },
+  meat: { en: "Meat", sr: "Meso" },
+  breakfastOption: { en: "Breakfast (no meat)", sr: "Doručak (bez mesa)" },
+  nameEn: { en: "Name (EN)", sr: "Naziv (EN)" },
+  nameSr: { en: "Name (SR)", sr: "Naziv (SR)" },
+  proteinG: { en: "Protein (g)", sr: "Protein (g)" },
+  qty: { en: "Qty", sr: "Količina" },
+  perishable: { en: "Perishable", sr: "Kvarljivo" },
+  addIngredient: { en: "+ Add ingredient", sr: "+ Dodaj sastojak" },
+  addStep: { en: "+ Add step", sr: "+ Dodaj korak" },
+  remove: { en: "Remove", sr: "Ukloni" },
+  saveRecipe: { en: "Save recipe", sr: "Sačuvaj recept" },
+  saving: { en: "Saving…", sr: "Čuvanje…" },
 } as const;
 
 export type TKey = keyof typeof t;

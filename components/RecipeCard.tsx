@@ -37,7 +37,6 @@ export default function RecipeCard({ recipe, lang }: { recipe: Recipe; lang: Lan
             {recipe.protein}g {tr(t.protein, lang)}
           </span>
           <span>{recipe.calories} {tr(t.kcal, lang)}</span>
-          <span>{recipe.time_min}{tr(t.minutes, lang)}</span>
         </div>
       </div>
     </button>

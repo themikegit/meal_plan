@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { fetchRecipes } from "@/lib/client";
 import type { Meat, Recipe } from "@/lib/types";
 import { MEATS } from "@/lib/types";
@@ -13,6 +15,7 @@ import { MEAT_LABELS, t, tr } from "@/lib/i18n";
 type FilterValue = "all" | Meat;
 
 export default function MealsClient() {
+  const router = useRouter();
   const { lang } = useLang();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -44,7 +47,17 @@ export default function MealsClient() {
             {recipes.length} {tr(t.countLine, lang)}
           </div>
         </div>
-        <LangToggle />
+        <div className="flex flex-none items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/meals/new")}
+            aria-label="Add recipe"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-bg"
+          >
+            <Plus size={20} strokeWidth={2.75} />
+          </button>
+          <LangToggle />
+        </div>
       </div>
 
       <div className="flex gap-[var(--space-2)] overflow-x-auto pb-1">

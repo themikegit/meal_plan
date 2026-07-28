@@ -1,6 +1,6 @@
 "use client";
 
-import type { DayKey, Plan, Recipe, SlotKind } from "./types";
+import type { DayKey, Ingredient, Meat, Plan, Recipe, SlotKind, Step } from "./types";
 
 async function jsonOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -19,6 +19,24 @@ export async function fetchRecipes(meat?: string | null): Promise<Recipe[]> {
 
 export async function fetchRecipe(id: string): Promise<Recipe> {
   const res = await fetch(`/api/recipes/${id}`, { cache: "no-store" });
+  const data = await jsonOrThrow<{ recipe: Recipe }>(res);
+  return data.recipe;
+}
+
+export async function createRecipe(input: {
+  meat: Meat | null;
+  name_en: string;
+  name_sr: string;
+  protein: number;
+  calories: number;
+  ingredients: Ingredient[];
+  steps: Step[];
+}): Promise<Recipe> {
+  const res = await fetch("/api/recipes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
   const data = await jsonOrThrow<{ recipe: Recipe }>(res);
   return data.recipe;
 }

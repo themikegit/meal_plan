@@ -25,7 +25,6 @@ export type Recipe = {
   name_sr: string;
   protein: number;
   calories: number;
-  time_min: number;
   ingredients: Ingredient[];
   steps: Step[];
 };

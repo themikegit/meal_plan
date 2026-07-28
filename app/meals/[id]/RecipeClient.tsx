@@ -82,14 +82,13 @@ export default function RecipeClient({ id }: { id: string }) {
         <h1 className="mt-2 text-[33px] leading-[1.05] text-text">{name}</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-[var(--space-2)]">
+      <div className="grid grid-cols-2 gap-[var(--space-2)]">
         <MacroTile
           value={`${recipe.protein}g`}
           label={tr(t.protein, lang).toUpperCase()}
           valueColor={style.bg}
         />
         <MacroTile value={`${recipe.calories}`} label={tr(t.kcal, lang).toUpperCase()} />
-        <MacroTile value={`${recipe.time_min}${tr(t.minutes, lang)}`} label="TIME" />
       </div>
 
       <section>
