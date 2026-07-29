@@ -1,28 +1,28 @@
-export type Meat = "beef" | "chicken" | "fish" | "lamb";
+export type Meat = "red_meat" | "poultry" | "fish" | "vege";
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 export type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 export type SlotKind = "breakfast" | "lunch" | "dinner";
 
 export const DAY_KEYS: DayKey[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const SLOT_KINDS: SlotKind[] = ["breakfast", "lunch", "dinner"];
-export const MEATS: Meat[] = ["beef", "chicken", "fish", "lamb"];
+export const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+export const MEATS: Meat[] = ["red_meat", "poultry", "fish", "vege"];
 
 export type Ingredient = {
   qty: string;
-  name_en: string;
-  name_sr: string;
+  name: string;
   perishable: boolean;
 };
 
 export type Step = {
-  en: string;
-  sr: string;
+  text: string;
 };
 
 export type Recipe = {
   id: string;
+  meal_type: MealType;
   meat: Meat | null;
-  name_en: string;
-  name_sr: string;
+  name: string;
   protein: number;
   calories: number;
   ingredients: Ingredient[];

@@ -4,17 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Heart } from "lucide-react";
 import { fetchPlan, fetchRecipe, setPlanSlot } from "@/lib/client";
-import type { Recipe } from "@/lib/types";
+import type { Recipe, SlotKind } from "@/lib/types";
 import { meatStyle } from "@/lib/meatColor";
 import { firstEmptySlot } from "@/lib/plan";
-import { useLang } from "@/components/LangProvider";
-import LangToggle from "@/components/LangToggle";
 import PhotoPlaceholder from "@/components/PhotoPlaceholder";
-import { MEAT_LABELS, t, tr } from "@/lib/i18n";
+import { MEAT_LABELS, STR } from "@/lib/strings";
+
+const PLANNABLE_SLOTS: SlotKind[] = ["breakfast", "lunch", "dinner"];
 
 export default function RecipeClient({ id }: { id: string }) {
   const router = useRouter();
-  const { lang } = useLang();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [added, setAdded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,16 +35,16 @@ export default function RecipeClient({ id }: { id: string }) {
   }
 
   const style = meatStyle(recipe.meat);
-  const name = lang === "en" ? recipe.name_en : recipe.name_sr;
+  const plannable = PLANNABLE_SLOTS.includes(recipe.meal_type as SlotKind);
 
   const addToWeek = async () => {
-    if (saving) return;
+    if (saving || !plannable) return;
     setSaving(true);
     try {
       const plan = await fetchPlan();
-      const day = firstEmptySlot(plan, "dinner");
+      const day = firstEmptySlot(plan, recipe.meal_type as SlotKind);
       if (day) {
-        await setPlanSlot(day, "dinner", recipe.id);
+        await setPlanSlot(day, recipe.meal_type as SlotKind, recipe.id);
         setAdded(true);
       }
     } finally {
@@ -59,12 +58,11 @@ export default function RecipeClient({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="Back"
+          aria-label="Nazad"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface"
         >
           <ArrowLeft size={20} strokeWidth={2.75} />
         </button>
-        <LangToggle />
       </div>
 
       <PhotoPlaceholder
@@ -73,27 +71,29 @@ export default function RecipeClient({ id }: { id: string }) {
       />
 
       <div>
-        <span
-          className="inline-flex rounded-[calc(var(--radius-md)*0.75)] px-2.5 py-0.5 text-[10px] font-bold tracking-[.1em] uppercase"
-          style={{ background: style.bg, color: style.text }}
-        >
-          {recipe.meat ? tr(MEAT_LABELS[recipe.meat], lang) : ""}
-        </span>
-        <h1 className="mt-2 text-[33px] leading-[1.05] text-text">{name}</h1>
+        {recipe.meat ? (
+          <span
+            className="inline-flex rounded-[calc(var(--radius-md)*0.75)] px-2.5 py-0.5 text-[10px] font-bold tracking-[.1em] uppercase"
+            style={{ background: style.bg, color: style.text }}
+          >
+            {MEAT_LABELS[recipe.meat]}
+          </span>
+        ) : null}
+        <h1 className="mt-2 text-[33px] leading-[1.05] text-text">{recipe.name}</h1>
       </div>
 
       <div className="grid grid-cols-2 gap-[var(--space-2)]">
         <MacroTile
           value={`${recipe.protein}g`}
-          label={tr(t.protein, lang).toUpperCase()}
+          label={STR.protein.toUpperCase()}
           valueColor={style.bg}
         />
-        <MacroTile value={`${recipe.calories}`} label={tr(t.kcal, lang).toUpperCase()} />
+        <MacroTile value={`${recipe.calories}`} label={STR.kcal.toUpperCase()} />
       </div>
 
       <section>
         <h2 className="mb-2 text-[11px] font-bold tracking-[.09em] text-neutral-600">
-          {tr(t.ingredients, lang)} · {tr(t.servings, lang)}
+          {STR.ingredients} · {STR.servings}
         </h2>
         <div className="rounded-[var(--radius-lg)] bg-surface p-[var(--space-3)]">
           {recipe.ingredients.map((ing, i) => (
@@ -106,9 +106,7 @@ export default function RecipeClient({ id }: { id: string }) {
               <span className="min-w-[70px] flex-none text-[12.5px] font-bold text-accent-700">
                 {ing.qty}
               </span>
-              <span className="text-[15px] text-text">
-                {lang === "en" ? ing.name_en : ing.name_sr}
-              </span>
+              <span className="text-[15px] text-text">{ing.name}</span>
             </div>
           ))}
         </div>
@@ -116,7 +114,7 @@ export default function RecipeClient({ id }: { id: string }) {
 
       <section>
         <h2 className="mb-2 text-[11px] font-bold tracking-[.09em] text-neutral-600">
-          {tr(t.method, lang)}
+          {STR.method}
         </h2>
         <div className="flex flex-col gap-[var(--space-3)]">
           {recipe.steps.map((s, i) => (
@@ -127,42 +125,42 @@ export default function RecipeClient({ id }: { id: string }) {
               >
                 {i + 1}
               </span>
-              <p className="text-[15px] leading-[1.5] text-neutral-800">
-                {lang === "en" ? s.en : s.sr}
-              </p>
+              <p className="text-[15px] leading-[1.5] text-neutral-800">{s.text}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md gap-[var(--space-2)] border-t border-[var(--color-divider)] bg-surface p-[var(--space-4)] safe-pb">
-        <button
-          type="button"
-          onClick={addToWeek}
-          disabled={saving}
-          className="flex-1 rounded-full px-[var(--space-4)] py-[18px] text-base font-bold text-white disabled:opacity-60"
-          style={
-            added
-              ? { background: "var(--color-accent-2-200)", color: "var(--color-accent-2-800)" }
-              : { background: style.bg, color: style.text }
-          }
-        >
-          {added ? tr(t.addedToWeek, lang) : tr(t.addToWeek, lang)}
-        </button>
-        <button
-          type="button"
-          onClick={() => setLiked((v) => !v)}
-          aria-label="Favorite"
-          className="flex h-[54px] w-[54px] flex-none items-center justify-center rounded-full bg-bg"
-        >
-          <Heart
-            size={22}
-            strokeWidth={2.75}
-            fill={liked ? "var(--color-accent)" : "none"}
-            color={liked ? "var(--color-accent)" : "var(--color-neutral-600)"}
-          />
-        </button>
-      </div>
+      {plannable ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md gap-[var(--space-2)] border-t border-[var(--color-divider)] bg-surface p-[var(--space-4)] safe-pb">
+          <button
+            type="button"
+            onClick={addToWeek}
+            disabled={saving}
+            className="flex-1 rounded-full px-[var(--space-4)] py-[18px] text-base font-bold text-white disabled:opacity-60"
+            style={
+              added
+                ? { background: "var(--color-accent-2-200)", color: "var(--color-accent-2-800)" }
+                : { background: style.bg, color: style.text }
+            }
+          >
+            {added ? STR.addedToWeek : STR.addToWeek}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLiked((v) => !v)}
+            aria-label="Omiljeno"
+            className="flex h-[54px] w-[54px] flex-none items-center justify-center rounded-full bg-bg"
+          >
+            <Heart
+              size={22}
+              strokeWidth={2.75}
+              fill={liked ? "var(--color-accent)" : "none"}
+              color={liked ? "var(--color-accent)" : "var(--color-neutral-600)"}
+            />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

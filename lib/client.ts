@@ -1,6 +1,6 @@
 "use client";
 
-import type { DayKey, Ingredient, Meat, Plan, Recipe, SlotKind, Step } from "./types";
+import type { DayKey, Ingredient, Meat, MealType, Plan, Recipe, SlotKind, Step } from "./types";
 
 async function jsonOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -24,9 +24,9 @@ export async function fetchRecipe(id: string): Promise<Recipe> {
 }
 
 export async function createRecipe(input: {
+  meal_type: MealType;
   meat: Meat | null;
-  name_en: string;
-  name_sr: string;
+  name: string;
   protein: number;
   calories: number;
   ingredients: Ingredient[];

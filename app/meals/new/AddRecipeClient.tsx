@@ -4,30 +4,37 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { createRecipe } from "@/lib/client";
-import { MEATS, type Ingredient, type Meat, type Step } from "@/lib/types";
-import { useLang } from "@/components/LangProvider";
-import LangToggle from "@/components/LangToggle";
-import { MEAT_LABELS, t, tr } from "@/lib/i18n";
+import { MEAL_TYPES, MEATS, type Ingredient, type Meat, type MealType, type Step } from "@/lib/types";
+import { meatStyle } from "@/lib/meatColor";
+import { MEAL_TYPE_LABELS, MEAT_LABELS, STR } from "@/lib/strings";
 
-type DraftIngredient = { qty: string; name_en: string; name_sr: string; perishable: boolean };
-type DraftStep = { en: string; sr: string };
+type DraftIngredient = { qty: string; name: string; perishable: boolean };
+type DraftStep = { text: string };
 
-const emptyIngredient = (): DraftIngredient => ({ qty: "", name_en: "", name_sr: "", perishable: true });
-const emptyStep = (): DraftStep => ({ en: "", sr: "" });
+const emptyIngredient = (): DraftIngredient => ({ qty: "", name: "", perishable: true });
+const emptyStep = (): DraftStep => ({ text: "" });
+
+const MEAT_REQUIRED_TYPES: MealType[] = ["lunch", "dinner"];
 
 export default function AddRecipeClient() {
   const router = useRouter();
-  const { lang } = useLang();
 
+  const [mealType, setMealType] = useState<MealType>("breakfast");
   const [meat, setMeat] = useState<Meat | null>(null);
-  const [nameEn, setNameEn] = useState("");
-  const [nameSr, setNameSr] = useState("");
+  const [name, setName] = useState("");
   const [protein, setProtein] = useState("");
   const [calories, setCalories] = useState("");
   const [ingredients, setIngredients] = useState<DraftIngredient[]>([emptyIngredient()]);
   const [steps, setSteps] = useState<DraftStep[]>([emptyStep()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const meatRequired = MEAT_REQUIRED_TYPES.includes(mealType);
+
+  const selectMealType = (m: MealType) => {
+    setMealType(m);
+    if (!MEAT_REQUIRED_TYPES.includes(m)) setMeat(null);
+  };
 
   const updateIngredient = (i: number, patch: Partial<DraftIngredient>) => {
     setIngredients((prev) => prev.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
@@ -41,36 +48,35 @@ export default function AddRecipeClient() {
     setError(null);
 
     const cleanIngredients: Ingredient[] = ingredients
-      .filter((row) => row.qty.trim() || row.name_en.trim() || row.name_sr.trim())
-      .map((row) => ({
-        qty: row.qty.trim(),
-        name_en: row.name_en.trim(),
-        name_sr: row.name_sr.trim(),
-        perishable: row.perishable,
-      }));
+      .filter((row) => row.qty.trim() || row.name.trim())
+      .map((row) => ({ qty: row.qty.trim(), name: row.name.trim(), perishable: row.perishable }));
     const cleanSteps: Step[] = steps
-      .filter((row) => row.en.trim() || row.sr.trim())
-      .map((row) => ({ en: row.en.trim(), sr: row.sr.trim() }));
+      .filter((row) => row.text.trim())
+      .map((row) => ({ text: row.text.trim() }));
 
-    if (!nameEn.trim() || !nameSr.trim()) {
-      setError("Name (EN and SR) is required.");
+    if (!name.trim()) {
+      setError("Naziv je obavezan.");
+      return;
+    }
+    if (meatRequired && !meat) {
+      setError("Izaberi vrstu mesa.");
       return;
     }
     if (cleanIngredients.length === 0) {
-      setError("Add at least one ingredient.");
+      setError("Dodaj bar jedan sastojak.");
       return;
     }
     if (cleanSteps.length === 0) {
-      setError("Add at least one step.");
+      setError("Dodaj bar jedan korak.");
       return;
     }
 
     setSaving(true);
     try {
       const recipe = await createRecipe({
-        meat,
-        name_en: nameEn.trim(),
-        name_sr: nameSr.trim(),
+        meal_type: mealType,
+        meat: meatRequired ? meat : null,
+        name: name.trim(),
         protein: Number.parseFloat(protein) || 0,
         calories: Number.parseFloat(calories) || 0,
         ingredients: cleanIngredients,
@@ -78,7 +84,7 @@ export default function AddRecipeClient() {
       });
       router.push(`/meals/${recipe.id}`);
     } catch (e) {
-      setError((e as Error).message || "Failed to save");
+      setError((e as Error).message || "Čuvanje nije uspelo");
       setSaving(false);
     }
   };
@@ -89,60 +95,66 @@ export default function AddRecipeClient() {
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="Back"
+          aria-label="Nazad"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface"
         >
           <ArrowLeft size={20} strokeWidth={2.75} />
         </button>
-        <LangToggle />
       </div>
 
-      <h1 className="text-[28px] leading-none text-text">{tr(t.addRecipe, lang)}</h1>
+      <h1 className="text-[28px] leading-none text-text">{STR.addRecipe}</h1>
 
       <section className="flex flex-col gap-[var(--space-2)]">
         <label className="text-[11px] font-bold tracking-[.09em] text-neutral-600">
-          {tr(t.meat, lang).toUpperCase()}
+          {STR.mealType.toUpperCase()}
         </label>
         <div className="flex gap-[var(--space-2)] overflow-x-auto pb-1">
-          <MeatPill
-            active={meat === null}
-            label={tr(t.breakfastOption, lang)}
-            onClick={() => setMeat(null)}
-          />
-          {MEATS.map((m) => (
-            <MeatPill
+          {MEAL_TYPES.map((m) => (
+            <Pill
               key={m}
-              active={meat === m}
-              label={tr(MEAT_LABELS[m], lang)}
-              onClick={() => setMeat(m)}
+              active={mealType === m}
+              label={MEAL_TYPE_LABELS[m]}
+              activeBg="var(--color-accent)"
+              activeText="#fff"
+              onClick={() => selectMealType(m)}
             />
           ))}
         </div>
       </section>
 
+      {meatRequired ? (
+        <section className="flex flex-col gap-[var(--space-2)]">
+          <label className="text-[11px] font-bold tracking-[.09em] text-neutral-600">
+            {STR.meat.toUpperCase()}
+          </label>
+          <div className="flex gap-[var(--space-2)] overflow-x-auto pb-1">
+            {MEATS.map((m) => {
+              const style = meatStyle(m);
+              return (
+                <Pill
+                  key={m}
+                  active={meat === m}
+                  label={MEAT_LABELS[m]}
+                  activeBg={style.bg}
+                  activeText={style.text}
+                  onClick={() => setMeat(m)}
+                />
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       <section className="flex flex-col gap-[var(--space-2)]">
-        <TextField label={tr(t.nameEn, lang)} value={nameEn} onChange={setNameEn} />
-        <TextField label={tr(t.nameSr, lang)} value={nameSr} onChange={setNameSr} />
+        <TextField label={STR.name} value={name} onChange={setName} />
         <div className="flex gap-[var(--space-2)]">
-          <TextField
-            label={tr(t.proteinG, lang)}
-            value={protein}
-            onChange={setProtein}
-            inputMode="decimal"
-          />
-          <TextField
-            label={tr(t.kcal, lang).toUpperCase()}
-            value={calories}
-            onChange={setCalories}
-            inputMode="decimal"
-          />
+          <TextField label={STR.proteinG} value={protein} onChange={setProtein} inputMode="decimal" />
+          <TextField label={STR.kcal.toUpperCase()} value={calories} onChange={setCalories} inputMode="decimal" />
         </div>
       </section>
 
       <section className="flex flex-col gap-[var(--space-2)]">
-        <h2 className="text-[11px] font-bold tracking-[.09em] text-neutral-600">
-          {tr(t.ingredients, lang)}
-        </h2>
+        <h2 className="text-[11px] font-bold tracking-[.09em] text-neutral-600">{STR.ingredients}</h2>
         <div className="flex flex-col gap-[var(--space-2)]">
           {ingredients.map((row, i) => (
             <div
@@ -153,40 +165,32 @@ export default function AddRecipeClient() {
                 <input
                   value={row.qty}
                   onChange={(e) => updateIngredient(i, { qty: e.target.value })}
-                  placeholder={tr(t.qty, lang)}
+                  placeholder={STR.qty}
                   className="w-20 min-w-0 rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
                 />
                 <input
-                  value={row.name_en}
-                  onChange={(e) => updateIngredient(i, { name_en: e.target.value })}
-                  placeholder={tr(t.nameEn, lang)}
+                  value={row.name}
+                  onChange={(e) => updateIngredient(i, { name: e.target.value })}
+                  placeholder={STR.name}
                   className="min-w-0 flex-1 rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
                 />
                 <button
                   type="button"
-                  aria-label="Remove ingredient"
+                  aria-label="Ukloni sastojak"
                   onClick={() => setIngredients((prev) => prev.filter((_, idx) => idx !== i))}
                   className="flex-none text-neutral-500 hover:text-accent-700"
                 >
                   <Trash2 size={16} strokeWidth={2.5} />
                 </button>
               </div>
-              <div className="flex gap-2">
+              <label className="flex flex-none items-center gap-1.5 px-1 text-xs text-neutral-600">
                 <input
-                  value={row.name_sr}
-                  onChange={(e) => updateIngredient(i, { name_sr: e.target.value })}
-                  placeholder={tr(t.nameSr, lang)}
-                  className="min-w-0 flex-1 rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
+                  type="checkbox"
+                  checked={row.perishable}
+                  onChange={(e) => updateIngredient(i, { perishable: e.target.checked })}
                 />
-                <label className="flex flex-none items-center gap-1.5 px-1 text-xs text-neutral-600">
-                  <input
-                    type="checkbox"
-                    checked={row.perishable}
-                    onChange={(e) => updateIngredient(i, { perishable: e.target.checked })}
-                  />
-                  {tr(t.perishable, lang)}
-                </label>
-              </div>
+                {STR.perishable}
+              </label>
             </div>
           ))}
         </div>
@@ -196,47 +200,36 @@ export default function AddRecipeClient() {
           className="flex items-center gap-1 self-start rounded-full bg-accent-100 px-3 py-1.5 text-sm font-semibold text-accent-800"
         >
           <Plus size={14} strokeWidth={3} />
-          {tr(t.addIngredient, lang)}
+          {STR.addIngredient}
         </button>
       </section>
 
       <section className="flex flex-col gap-[var(--space-2)]">
-        <h2 className="text-[11px] font-bold tracking-[.09em] text-neutral-600">
-          {tr(t.method, lang)}
-        </h2>
+        <h2 className="text-[11px] font-bold tracking-[.09em] text-neutral-600">{STR.method}</h2>
         <div className="flex flex-col gap-[var(--space-2)]">
           {steps.map((row, i) => (
             <div
               key={i}
-              className="flex flex-col gap-2 rounded-[var(--radius-md)] bg-surface p-[var(--space-2)]"
+              className="flex items-start gap-2 rounded-[var(--radius-md)] bg-surface p-[var(--space-2)]"
             >
-              <div className="flex items-start gap-2">
-                <span className="mt-1.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent text-[12px] font-bold text-bg">
-                  {i + 1}
-                </span>
-                <textarea
-                  value={row.en}
-                  onChange={(e) => updateStep(i, { en: e.target.value })}
-                  placeholder={`${tr(t.nameEn, lang)} step`}
-                  rows={2}
-                  className="min-w-0 flex-1 resize-none rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
-                />
-                <button
-                  type="button"
-                  aria-label="Remove step"
-                  onClick={() => setSteps((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="mt-1.5 flex-none text-neutral-500 hover:text-accent-700"
-                >
-                  <Trash2 size={16} strokeWidth={2.5} />
-                </button>
-              </div>
+              <span className="mt-1.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent text-[12px] font-bold text-bg">
+                {i + 1}
+              </span>
               <textarea
-                value={row.sr}
-                onChange={(e) => updateStep(i, { sr: e.target.value })}
-                placeholder={`${tr(t.nameSr, lang)} step`}
+                value={row.text}
+                onChange={(e) => updateStep(i, { text: e.target.value })}
+                placeholder="Korak"
                 rows={2}
-                className="ml-8 min-w-0 resize-none rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
+                className="min-w-0 flex-1 resize-none rounded-[var(--radius-sm)] bg-bg px-2 py-1.5 text-sm"
               />
+              <button
+                type="button"
+                aria-label="Ukloni korak"
+                onClick={() => setSteps((prev) => prev.filter((_, idx) => idx !== i))}
+                className="mt-1.5 flex-none text-neutral-500 hover:text-accent-700"
+              >
+                <Trash2 size={16} strokeWidth={2.5} />
+              </button>
             </div>
           ))}
         </div>
@@ -246,7 +239,7 @@ export default function AddRecipeClient() {
           className="flex items-center gap-1 self-start rounded-full bg-accent-100 px-3 py-1.5 text-sm font-semibold text-accent-800"
         >
           <Plus size={14} strokeWidth={3} />
-          {tr(t.addStep, lang)}
+          {STR.addStep}
         </button>
       </section>
 
@@ -259,14 +252,20 @@ export default function AddRecipeClient() {
           disabled={saving}
           className="flex-1 rounded-full bg-accent px-[var(--space-4)] py-[18px] text-base font-bold text-bg disabled:opacity-60"
         >
-          {saving ? tr(t.saving, lang) : tr(t.saveRecipe, lang)}
+          {saving ? STR.saving : STR.saveRecipe}
         </button>
       </div>
     </div>
   );
 }
 
-function MeatPill({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+function Pill({ active, label, activeBg, activeText, onClick }: {
+  active: boolean;
+  label: string;
+  activeBg: string;
+  activeText: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -274,7 +273,7 @@ function MeatPill({ active, label, onClick }: { active: boolean; label: string; 
       className="flex-none rounded-full px-[14px] py-[8px] text-sm transition-colors"
       style={
         active
-          ? { background: "var(--color-accent)", color: "var(--color-bg)", fontWeight: 700 }
+          ? { background: activeBg, color: activeText, fontWeight: 700 }
           : { background: "var(--color-surface)", color: "var(--color-neutral-700)" }
       }
     >

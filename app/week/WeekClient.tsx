@@ -6,10 +6,8 @@ import { DAY_KEYS, SLOT_KINDS, type DayKey, type Plan, type Recipe, type SlotKin
 import { weekSummary } from "@/lib/plan";
 import { currentWeekDates, formatWeekRange } from "@/lib/week";
 import { meatStyle } from "@/lib/meatColor";
-import { useLang } from "@/components/LangProvider";
-import LangToggle from "@/components/LangToggle";
 import RecipePickerSheet from "@/components/RecipePickerSheet";
-import { DAY_NAMES, SLOT_LETTERS, t, tr } from "@/lib/i18n";
+import { DAY_NAMES, SLOT_LETTERS, STR } from "@/lib/strings";
 
 const EMPTY_PLAN: Plan = DAY_KEYS.reduce((acc, day) => {
   acc[day] = { breakfast: null, lunch: null, dinner: null };
@@ -17,7 +15,6 @@ const EMPTY_PLAN: Plan = DAY_KEYS.reduce((acc, day) => {
 }, {} as Plan);
 
 export default function WeekClient() {
-  const { lang } = useLang();
   const [plan, setPlan] = useState<Plan>(EMPTY_PLAN);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [picker, setPicker] = useState<{ day: DayKey; slot: SlotKind } | null>(null);
@@ -63,12 +60,11 @@ export default function WeekClient() {
     <div className="mx-auto flex max-w-md flex-col gap-[var(--space-3)] px-[var(--space-4)] pt-[var(--space-3)] pb-8">
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         <div>
-          <h1 className="text-[34px] leading-none text-text">{tr(t.myWeek, lang)}</h1>
+          <h1 className="text-[34px] leading-none text-text">{STR.myWeek}</h1>
           <div className="mt-2 text-[12.5px] font-medium text-neutral-600">
             {formatWeekRange(dates)}
           </div>
         </div>
-        <LangToggle />
       </div>
 
       <div className="flex gap-[var(--space-4)] rounded-[var(--radius-lg)] bg-accent-2-200 p-[var(--space-4)]">
@@ -77,7 +73,7 @@ export default function WeekClient() {
             {summary.avgProtein}g · {summary.avgCalories}
           </div>
           <div className="mt-1 text-[10px] font-bold tracking-[.09em] text-accent-2-700">
-            {tr(t.avgPerDay, lang)}
+            {STR.avgPerDay}
           </div>
         </div>
         <div>
@@ -85,7 +81,7 @@ export default function WeekClient() {
             {summary.slotsFilled}/{summary.slotsTotal}
           </div>
           <div className="mt-1 text-[10px] font-bold tracking-[.09em] text-accent-2-700">
-            {tr(t.slotsFilled, lang)}
+            {STR.slotsFilled}
           </div>
         </div>
       </div>
@@ -98,7 +94,7 @@ export default function WeekClient() {
             <div key={day} className="rounded-[var(--radius-lg)] bg-surface p-[var(--space-3)]">
               <div className="mb-2 flex items-center justify-between">
                 <span className="font-heading text-[19px] text-text">
-                  {tr(DAY_NAMES[day], lang)}
+                  {DAY_NAMES[day]}
                 </span>
                 <div className="flex gap-[var(--space-2)]">
                   <span
@@ -121,7 +117,6 @@ export default function WeekClient() {
                   const recipeId = plan[day][slot];
                   const recipe = recipeId ? recipesById.get(recipeId) : null;
                   const style = meatStyle(recipe?.meat ?? null);
-                  const name = recipe ? (lang === "en" ? recipe.name_en : recipe.name_sr) : null;
                   return (
                     <button
                       key={slot}
@@ -132,7 +127,7 @@ export default function WeekClient() {
                       }`}
                     >
                       <span className="w-4 flex-none text-center text-[11px] font-bold text-neutral-500">
-                        {tr(SLOT_LETTERS[slot], lang)}
+                        {SLOT_LETTERS[slot]}
                       </span>
                       <span
                         className="h-[9px] w-[9px] flex-none rounded-full"
@@ -147,7 +142,7 @@ export default function WeekClient() {
                           recipe ? "font-semibold text-text" : "text-neutral-500"
                         }`}
                       >
-                        {name ?? tr(t.addMeal, lang)}
+                        {recipe?.name ?? STR.addMeal}
                       </span>
                       {recipe ? (
                         <span className="flex-none text-xs text-neutral-600">
@@ -167,7 +162,6 @@ export default function WeekClient() {
         <RecipePickerSheet
           slot={picker.slot}
           recipes={recipes}
-          lang={lang}
           onPick={handlePick}
           onClose={() => setPicker(null)}
         />

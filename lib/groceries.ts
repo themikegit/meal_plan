@@ -3,8 +3,7 @@ import { DAY_KEYS, SLOT_KINDS, type DayKey, type Plan, type Recipe, type SlotKin
 export type FreshRow = {
   rowId: string;
   qty: string;
-  name_en: string;
-  name_sr: string;
+  name: string;
   slot: SlotKind;
   meat: Recipe["meat"];
 };
@@ -17,8 +16,7 @@ export type FreshGroup = {
 export type PantryRow = {
   rowId: string;
   qty: string;
-  name_en: string;
-  name_sr: string;
+  name: string;
   count: number;
 };
 
@@ -44,13 +42,12 @@ export function buildGroceryList(plan: Plan, recipesById: Map<string, Recipe>): 
           rows.push({
             rowId: `${dayKey}${slot}${index}`,
             qty: ing.qty,
-            name_en: ing.name_en,
-            name_sr: ing.name_sr,
+            name: ing.name,
             slot,
             meat: recipe.meat,
           });
         } else {
-          const key = `p-${ing.name_en}`;
+          const key = `p-${ing.name}`;
           const existing = pantryMap.get(key);
           if (existing) {
             existing.count += 1;
@@ -58,8 +55,7 @@ export function buildGroceryList(plan: Plan, recipesById: Map<string, Recipe>): 
             pantryMap.set(key, {
               rowId: key,
               qty: ing.qty,
-              name_en: ing.name_en,
-              name_sr: ing.name_sr,
+              name: ing.name,
               count: 1,
             });
           }

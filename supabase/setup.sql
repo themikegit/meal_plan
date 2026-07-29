@@ -1,19 +1,22 @@
 -- Run this in the Supabase SQL editor for your project.
--- Recipes are global seed data; plan_slots and grocery_checks are scoped to
--- Clerk user IDs, mirroring the fin-ance project's expenses/incomes pattern.
+-- Recipes are global, single-language (Serbian) data; plan_slots and
+-- grocery_checks are scoped to Clerk user IDs, mirroring the fin-ance
+-- project's expenses/incomes pattern.
 
 create extension if not exists "pgcrypto";
 
+-- meal_type is the primary browsing dimension (Doručak/Ručak/Večera/Snek).
+-- meat is a secondary dimension that only applies to lunch/dinner recipes
+-- (Crveno meso/Perutnina/Riba/Vege) — null for breakfast/snack.
 create table if not exists public.recipes (
   id uuid primary key default gen_random_uuid(),
-  meat text check (meat in ('beef','chicken','fish','lamb')), -- null = breakfast item
-  name_en text not null,
-  name_sr text not null,
+  meal_type text not null check (meal_type in ('breakfast','lunch','dinner','snack')),
+  meat text check (meat in ('red_meat','poultry','fish','vege')),
+  name text not null,
   protein numeric not null,
   calories integer not null,
-  time_min integer not null,
-  ingredients jsonb not null, -- [{ qty, name_en, name_sr, perishable }]
-  steps jsonb not null,       -- [{ en, sr }]
+  ingredients jsonb not null, -- [{ qty, name, perishable }]
+  steps jsonb not null,       -- [{ text }]
   created_at timestamptz not null default now()
 );
 
@@ -30,7 +33,7 @@ create index if not exists plan_slots_user_id_idx on public.plan_slots (user_id)
 
 create table if not exists public.grocery_checks (
   user_id text not null,
-  row_id text not null, -- `${dayKey}${slot}${ingredientIndex}` fresh rows, `p-${nameEn}` pantry rows
+  row_id text not null, -- `${dayKey}${slot}${ingredientIndex}` fresh rows, `p-${name}` pantry rows
   created_at timestamptz not null default now(),
   primary key (user_id, row_id)
 );

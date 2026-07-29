@@ -4,7 +4,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import LangProvider from "@/components/LangProvider";
 import "./globals.css";
 
 const caprasimo = Caprasimo({
@@ -56,15 +55,13 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html
-        lang="en"
+        lang="sr"
         className={`${caprasimo.variable} ${figtree.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-bg text-text">
-          <LangProvider>
-            <ServiceWorkerRegister />
-            <main className="flex-1 pb-24 safe-pt">{children}</main>
-            {userId ? <BottomNav /> : null}
-          </LangProvider>
+          <ServiceWorkerRegister />
+          <main className="flex-1 pb-24 safe-pt">{children}</main>
+          {userId ? <BottomNav /> : null}
         </body>
       </html>
     </ClerkProvider>

@@ -6,12 +6,9 @@ import { fetchChecked, fetchPlan, fetchRecipes, setChecked } from "@/lib/client"
 import type { Plan, Recipe } from "@/lib/types";
 import { buildGroceryList } from "@/lib/groceries";
 import { meatStyle } from "@/lib/meatColor";
-import { useLang } from "@/components/LangProvider";
-import LangToggle from "@/components/LangToggle";
-import { DAY_NAMES, SLOT_LETTERS, t, tr } from "@/lib/i18n";
+import { DAY_NAMES, SLOT_LETTERS, STR } from "@/lib/strings";
 
 export default function GroceriesClient() {
-  const { lang } = useLang();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [checked, setCheckedIds] = useState<Set<string>>(new Set());
@@ -53,25 +50,24 @@ export default function GroceriesClient() {
     <div className="mx-auto flex max-w-md flex-col gap-[var(--space-3)] px-[var(--space-4)] pt-[var(--space-3)] pb-8">
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         <div>
-          <h1 className="text-[34px] leading-none text-text">{tr(t.groceries, lang)}</h1>
+          <h1 className="text-[34px] leading-none text-text">{STR.groceries}</h1>
           <div className="mt-2 text-[12.5px] font-medium text-neutral-600">
-            {checkedCount} {tr(t.crossedOff, lang).replace("{n}", String(totalRows))}
+            {checkedCount} {STR.crossedOffOf} {totalRows} {STR.crossedOffSuffix}
           </div>
         </div>
-        <LangToggle />
       </div>
 
       <div className="rounded-[var(--radius-lg)] bg-accent-100 p-[var(--space-3)] text-sm text-accent-800">
-        {tr(t.explainer, lang)}
+        {STR.explainer}
       </div>
 
       {list.freshGroups.map((group) => (
         <div key={group.dayKey} className="flex flex-col gap-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)]">
             <span className="rounded-full bg-accent-2-200 px-2.5 py-0.5 text-[10px] font-bold tracking-[.08em] text-accent-2-800">
-              {tr(t.buyFresh, lang)}
+              {STR.buyFresh}
             </span>
-            <span className="font-heading text-base text-text">{tr(DAY_NAMES[group.dayKey], lang)}</span>
+            <span className="font-heading text-base text-text">{DAY_NAMES[group.dayKey]}</span>
             <span className="text-xs text-neutral-600">{group.rows.length}</span>
           </div>
           <div className="rounded-[var(--radius-lg)] bg-surface p-[var(--space-2)]">
@@ -79,11 +75,11 @@ export default function GroceriesClient() {
               <GroceryRow
                 key={row.rowId}
                 qty={row.qty}
-                name={lang === "en" ? row.name_en : row.name_sr}
+                name={row.name}
                 checked={checked.has(row.rowId)}
                 onToggle={() => toggle(row.rowId)}
                 divider={i > 0}
-                tag={{ label: tr(SLOT_LETTERS[row.slot], lang), style: meatStyle(row.meat) }}
+                tag={{ label: SLOT_LETTERS[row.slot], style: meatStyle(row.meat) }}
               />
             ))}
           </div>
@@ -92,13 +88,13 @@ export default function GroceriesClient() {
 
       {list.pantry.length > 0 ? (
         <div className="flex flex-col gap-[var(--space-2)]">
-          <span className="font-heading text-base text-text">{tr(t.stockUp, lang)}</span>
+          <span className="font-heading text-base text-text">{STR.stockUp}</span>
           <div className="rounded-[var(--radius-lg)] bg-surface p-[var(--space-2)]">
             {list.pantry.map((row, i) => (
               <GroceryRow
                 key={row.rowId}
                 qty={row.count > 1 ? `${row.qty} ×${row.count}` : row.qty}
-                name={lang === "en" ? row.name_en : row.name_sr}
+                name={row.name}
                 checked={checked.has(row.rowId)}
                 onToggle={() => toggle(row.rowId)}
                 divider={i > 0}

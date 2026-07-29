@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { MEATS, type Ingredient, type Step } from "@/lib/types";
+import { MEAL_TYPES, MEATS, type Ingredient, type Step } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const sb = getSupabaseAdmin();
   const meat = new URL(req.url).searchParams.get("meat");
 
-  let query = sb.from("recipes").select("*").order("name_en", { ascending: true });
+  let query = sb.from("recipes").select("*").order("name", { ascending: true });
   if (meat && (MEATS as string[]).includes(meat)) {
     query = query.eq("meat", meat);
   }
@@ -28,13 +28,10 @@ function parseIngredients(v: unknown): Ingredient[] | null {
   const out: Ingredient[] = [];
   for (const row of v) {
     const r = row as Record<string, unknown>;
-    if (!isNonEmptyString(r.qty) || !isNonEmptyString(r.name_en) || !isNonEmptyString(r.name_sr)) {
-      return null;
-    }
+    if (!isNonEmptyString(r.qty) || !isNonEmptyString(r.name)) return null;
     out.push({
       qty: r.qty.trim(),
-      name_en: r.name_en.trim(),
-      name_sr: r.name_sr.trim(),
+      name: r.name.trim(),
       perishable: Boolean(r.perishable),
     });
   }
@@ -46,11 +43,13 @@ function parseSteps(v: unknown): Step[] | null {
   const out: Step[] = [];
   for (const row of v) {
     const r = row as Record<string, unknown>;
-    if (!isNonEmptyString(r.en) || !isNonEmptyString(r.sr)) return null;
-    out.push({ en: r.en.trim(), sr: r.sr.trim() });
+    if (!isNonEmptyString(r.text)) return null;
+    out.push({ text: r.text.trim() });
   }
   return out;
 }
+
+const MEAT_REQUIRED_TYPES = new Set(["lunch", "dinner"]);
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -63,15 +62,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const { meat, name_en, name_sr, protein, calories, ingredients, steps } = (body ?? {}) as Record<
+  const { meal_type, meat, name, protein, calories, ingredients, steps } = (body ?? {}) as Record<
     string,
     unknown
   >;
 
-  if (meat !== null && !(MEATS as string[]).includes(meat as string)) {
+  if (!(MEAL_TYPES as string[]).includes(meal_type as string)) {
+    return NextResponse.json({ error: "invalid_meal_type" }, { status: 400 });
+  }
+  const meatRequired = MEAT_REQUIRED_TYPES.has(meal_type as string);
+  if (meatRequired) {
+    if (!(MEATS as string[]).includes(meat as string)) {
+      return NextResponse.json({ error: "invalid_meat" }, { status: 400 });
+    }
+  } else if (meat !== null && meat !== undefined) {
     return NextResponse.json({ error: "invalid_meat" }, { status: 400 });
   }
-  if (!isNonEmptyString(name_en) || !isNonEmptyString(name_sr)) {
+  if (!isNonEmptyString(name)) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
   const numericProtein = typeof protein === "number" ? protein : Number.parseFloat(String(protein));
@@ -95,9 +102,9 @@ export async function POST(req: Request) {
   const { data, error } = await sb
     .from("recipes")
     .insert({
-      meat: meat ?? null,
-      name_en: (name_en as string).trim(),
-      name_sr: (name_sr as string).trim(),
+      meal_type,
+      meat: meatRequired ? meat : null,
+      name: (name as string).trim(),
       protein: numericProtein,
       calories: numericCalories,
       ingredients: parsedIngredients,
