@@ -8,13 +8,13 @@ import "./globals.css";
 
 const caprasimo = Caprasimo({
   weight: "400",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-caprasimo",
 });
 
 const figtree = Figtree({
   weight: ["400", "500", "600", "700", "800"],
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-figtree",
 });
 

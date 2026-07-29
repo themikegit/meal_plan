@@ -14,6 +14,11 @@ const TABS = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // Drill-in screens (recipe detail, add recipe) have their own sticky
+  // action bar at the same fixed position — hide the tab bar there so it
+  // doesn't paint over it.
+  if (pathname.startsWith("/meals/")) return null;
+
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-40 border-t border-[var(--color-divider)] bg-surface/95 backdrop-blur safe-pb"
