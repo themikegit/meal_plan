@@ -23,7 +23,7 @@ export async function fetchRecipe(id: string): Promise<Recipe> {
   return data.recipe;
 }
 
-export async function createRecipe(input: {
+export type RecipeInput = {
   meal_type: MealType;
   meat: Meat | null;
   name: string;
@@ -31,9 +31,21 @@ export async function createRecipe(input: {
   calories: number;
   ingredients: Ingredient[];
   steps: Step[];
-}): Promise<Recipe> {
+};
+
+export async function createRecipe(input: RecipeInput): Promise<Recipe> {
   const res = await fetch("/api/recipes", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = await jsonOrThrow<{ recipe: Recipe }>(res);
+  return data.recipe;
+}
+
+export async function updateRecipe(id: string, input: RecipeInput): Promise<Recipe> {
+  const res = await fetch(`/api/recipes/${id}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });

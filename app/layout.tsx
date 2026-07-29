@@ -1,21 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Caprasimo, Figtree } from "next/font/google";
+import { Comfortaa, Nunito } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const caprasimo = Caprasimo({
-  weight: "400",
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-caprasimo",
+const comfortaa = Comfortaa({
+  weight: ["700"],
+  subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"],
+  variable: "--font-comfortaa",
 });
 
-const figtree = Figtree({
+const nunito = Nunito({
   weight: ["400", "500", "600", "700", "800"],
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-figtree",
+  subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"],
+  variable: "--font-nunito",
 });
 
 export const metadata: Metadata = {
@@ -56,7 +56,7 @@ export default async function RootLayout({
     <ClerkProvider>
       <html
         lang="sr"
-        className={`${caprasimo.variable} ${figtree.variable} h-full antialiased`}
+        className={`${comfortaa.variable} ${nunito.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-bg text-text">
           <ServiceWorkerRegister />

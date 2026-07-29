@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Heart } from "lucide-react";
+import { ArrowLeft, Heart, Pencil } from "lucide-react";
 import { fetchPlan, fetchRecipe, setPlanSlot } from "@/lib/client";
 import type { Recipe, SlotKind } from "@/lib/types";
 import { meatStyle } from "@/lib/meatColor";
@@ -62,6 +62,14 @@ export default function RecipeClient({ id }: { id: string }) {
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface"
         >
           <ArrowLeft size={20} strokeWidth={2.75} />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push(`/meals/${recipe.id}/edit`)}
+          aria-label="Izmeni recept"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface"
+        >
+          <Pencil size={18} strokeWidth={2.75} />
         </button>
       </div>
 

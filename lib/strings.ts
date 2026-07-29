@@ -53,6 +53,7 @@ export const STR = {
   pickRecipe: "Izaberi recept",
   clearSlot: "Obriši",
   addRecipe: "Dodaj recept",
+  editRecipe: "Izmeni recept",
   mealType: "Tip obroka",
   meat: "Meso",
   name: "Naziv",
